@@ -27,5 +27,34 @@ namespace ClientDesktop
         {
             InitializeComponent();
         }
+
+        private void OpenFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                DefaultExt = ".py", // Default file extension
+                Filter = "Python Files|*.py|All Files|*.*", // Filter files by extension
+            };
+
+            // Show open file dialog
+            bool? result = openFileDialog.ShowDialog();
+
+            if (result == true)
+            {
+                // Get the selected file path
+                string selectedFilePath = openFileDialog.FileName;
+
+                // Read the contents of the selected file
+                string fileContents = System.IO.File.ReadAllText(selectedFilePath);
+
+                // Display the file contents in the PythonCodeTextBox or send it to the server
+                PythonCodeTextBox.Text = fileContents;
+            }
+        }
+
+        private void SubmitCodeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

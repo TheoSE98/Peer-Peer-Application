@@ -7,20 +7,6 @@ namespace WebDBServer.Controllers
 {
     public class ClientController : Controller
     {
-        //private readonly Random random = new Random();
-        //private const int MinPort = 1024; // Minimum valid port number
-        //private const int MaxPort = 65535; // Maximum valid port number
-
-        public ClientController()
-        {
-            // Testing Data 
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 1234 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 5678 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 4321 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 8765 });
-
-        }
-
         [HttpPost]
         public ActionResult Register([FromBody] ClientModel newClient)
         {
