@@ -2,6 +2,6 @@
 {
     public static class ClientListModel
     {
-        private static List<ClientModel>  Clients { get; } = new List<ClientModel>();
+        public static List<ClientModel>  Clients { get; } = new List<ClientModel>();
     }
 }
