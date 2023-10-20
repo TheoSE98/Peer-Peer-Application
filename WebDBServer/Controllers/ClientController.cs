@@ -10,6 +10,17 @@ namespace WebDBServer.Controllers
         [HttpPost]
         public ActionResult Register([FromBody] ClientModel newClient)
         {
+            if (newClient == null)
+            {
+                return BadRequest("Invalid client data.");
+            }
+
+            // Check if the client is already registered based on their port
+            if (ClientListModel.Clients.Any(c => c.Port == newClient.Port))
+            {
+                return Conflict("Client with the same port is already registered.");
+            }
+
             // Add the client to the static list
             ClientListModel.Clients.Add(newClient);
 
@@ -18,7 +29,13 @@ namespace WebDBServer.Controllers
 
         public ActionResult ClientList()
         {
-            return Json(ClientListModel.Clients);
+            List<ClientModel> clients = ClientListModel.Clients;
+            if (clients.Count == 0)
+            {
+                return NotFound("No clients are registered.");
+            }
+
+            return Json(clients);
         }
 
         [HttpGet]
@@ -26,14 +43,18 @@ namespace WebDBServer.Controllers
         {
             int currentPort = GetCurrentClientPort();
 
-            List<ClientModel> otherClients = new List<ClientModel>();
-
-            foreach (ClientModel client in ClientListModel.Clients)
+            if (currentPort == -1)
             {
-                if (client.Port != currentPort)
-                {
-                    otherClients.Add(client);
-                }
+                return NotFound("No clients are registered.");
+            }
+
+            List<ClientModel> otherClients = ClientListModel.Clients
+                .Where((ClientModel client) => client.Port != currentPort)
+                .ToList();
+
+            if (otherClients.Count == 0)
+            {
+                return NotFound("No other clients found.");
             }
 
             return Json(otherClients);
@@ -41,9 +62,26 @@ namespace WebDBServer.Controllers
 
         private int GetCurrentClientPort()
         {
-            int currentPort = ClientListModel.Clients.Last().Port;
+            ClientModel lastClient = ClientListModel.Clients.LastOrDefault();
+            if (lastClient == null)
+            {
+                return -1;
+            }
 
-            return currentPort;
+            return lastClient.Port;
+        }
+
+        [HttpPost]
+        public ActionResult PostJobResult([FromBody] JobResultModel jobResult)
+        {
+            if (jobResult == null)
+            {
+                return BadRequest("Invalid job result data");
+            }
+
+            JobResultListModel.JobResults.Add(jobResult);
+
+            return Json(new { Message = "Job result posted successfully" });
         }
     }
 }
