@@ -45,5 +45,11 @@
     <Compile Include="IServerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\APIModels\APIModels.csproj">
+      <Project>{91acf765-eaa9-4783-a803-c1b14c51f6e4}</Project>
+      <Name>APIModels</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

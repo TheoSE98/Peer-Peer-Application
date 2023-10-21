@@ -32,14 +32,16 @@ namespace ClientDesktop
         private Thread serverThread;
         private RestClient client;
         private const string URL = "http://localhost:5002";
+        private static bool ProcessJobFlag { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();
 
             client = new RestClient(URL);
 
-           // networkingThread = new Thread(NetworkingThreadFunction);
-           // serverThread.Start();
+            networkingThread = new Thread(NetworkingThreadFunction);
+            networkingThread.Start();
 
             serverThread = new Thread(ServerThreadFunction);
             serverThread.Start();
@@ -78,10 +80,115 @@ namespace ClientDesktop
             }
         }
 
-        //private async Task NetworkingThreadFunction()
-        //{
+        private async Task<List<ClientModel>> GetAvailableClients()
+        {
+            try
+            {
+                Console.WriteLine("Requesting available clients from the server...");
 
-        // }
+                RestRequest request = new RestRequest("/Client/GetOtherClients", Method.Get);
+                RestResponse response = await client.ExecuteAsync(request);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine("Available clients retrieved successfully.");
+                    // Deserialize the response to get available clients
+                    var availableClients = JsonConvert.DeserializeObject<List<ClientModel>>(response.Content);
+                    Console.WriteLine($"Available clients count: {availableClients.Count}");
+                    return availableClients;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error getting available clients: " + ex.Message);
+            }
+
+            return new List<ClientModel>();
+        }
+
+        private async Task ConnectAndExecuteTasks(ClientModel client, List<ClientModel> updatedClients)
+        {
+            try
+            {
+                NetTcpBinding tcpBinding = new NetTcpBinding();
+                string serverAddress = $"net.tcp://{client.IP}:{client.Port}/ClientService";
+                ChannelFactory<IServerService> factory = new ChannelFactory<IServerService>(tcpBinding, new EndpointAddress(serverAddress));
+
+                // Create a channel to the client
+                IServerService serverChannel = factory.CreateChannel();
+
+                Console.WriteLine("test 1");
+                // Query if any jobs exist and download them
+                List<JobModel> jobs = await serverChannel.GetJobs(); // Change here to use async method
+                Console.WriteLine("test 2");
+
+                if (jobs.Count > 0)
+                {
+                    Console.WriteLine($"Connected to client {client.IP}:{client.Port}");
+                    Console.WriteLine($"Found {jobs.Count} job(s) to execute:");
+                    // Process the jobs
+                    var tasks = jobs.Select(async job =>
+                    {
+                        // Execute the job using IronPython
+                        string result = await serverChannel.PostJob(job.JobCode); // Change here to use async method
+                        Console.WriteLine($"Job execution result: {result}");
+                    });
+
+                    await Task.WhenAll(tasks);
+
+                    updatedClients.Add(client);
+                }
+
+                // Close the factory after use
+                factory.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error connecting to client {client.IP}:{client.Port}: {ex.Message}");
+            }
+        }
+
+        private void NetworkingThreadFunction()
+        {
+            while (true)
+            {
+                try
+                {
+                    List<ClientModel> availableClients = null;
+
+                    // Get available clients
+                    Task.Run(async () =>
+                    {
+                        availableClients = await GetAvailableClients();
+                    }).Wait();
+
+                    if (availableClients.Count > 0)
+                    {
+                        List<ClientModel> updatedClients = new List<ClientModel>();
+
+                        foreach (var client in availableClients)
+                        {
+                            // Connect to the client and perform tasks
+                            Console.WriteLine($"attempting to connect {client.Port}");
+                            
+                            Task.Run(async () =>
+                            {
+                                await ConnectAndExecuteTasks(client, updatedClients);
+                            }).Wait();
+                        }
+
+                        availableClients = updatedClients;
+                    }
+
+                    // Wait for some time before checking again
+                    Thread.Sleep(5000);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Networking thread error: " + ex.Message);
+                }
+            }
+        }
 
         private void ServerThreadFunction()
         {
@@ -108,24 +215,37 @@ namespace ClientDesktop
 
                 while (true)
                 {
+                    if (ProcessJobFlag)
+                    {
+                        // This probably needs to be sent to the WebServer instead of this shit 
+                        string pythonCode = JobData.PythonCode;
+                        //string result = service.PostJob(pythonCode);
+                        Console.WriteLine($"Adding a job to the queue: {pythonCode}");
+                        JobModel job = new JobModel { JobCode = pythonCode};
+                        service.AddJobToQueue(job);
+                        
+
+                        // Reset the flag
+                        ProcessJobFlag = false;
+                    }
                     Thread.Sleep(1000); //Avoid using too much CPU 
                 }
             }
             catch (Exception e)
             {
-                //Handle any errors when attempting to start the server 
+                // Handle any errors when attempting to start the server 
                 Console.WriteLine("An error has occured when attempting to start server: " + e.Message);
             }
             finally
             {
-                //Check host is open before closing 
+                // Check host is open before closing 
                 if (host != null && host.State == CommunicationState.Opened)
                 {
                     try
                     {
                         host.Close();
                     }
-                    //Handles Errors when server is closed
+                    // Handles Errors when server is closed
                     catch (Exception ex) { Console.WriteLine("An error occured when attempting to close server " + ex.Message); }
                 }
             }
@@ -147,7 +267,6 @@ namespace ClientDesktop
 
                 string fileContents = System.IO.File.ReadAllText(selectedFilePath);
 
-                // Display the file contents in the PythonCodeTextBox or send it to the server NOT SURE YET 
                 PythonCodeTextBox.Text = fileContents;
             }
         }
@@ -165,15 +284,11 @@ namespace ClientDesktop
                 }
 
                 // Create a channel factory to communicate with the server's WCF service
-                NetTcpBinding tcpBinding = new NetTcpBinding();
-                string serverAddress = "net.tcp://localhost:8100/ClientService";
-                ChannelFactory<IServerService> factory = new ChannelFactory<IServerService>(tcpBinding, new EndpointAddress(serverAddress));
+                JobData.PythonCode = pythonCode;
 
-                // Create a channel to the server
-                IServerService serverChannel = factory.CreateChannel();
+                ProcessJobFlag = true;
 
-                string result = serverChannel.PostJob(pythonCode);
-                MessageBox.Show(result, "Job Submitted");
+                MessageBox.Show("Job submitted.", "Job Submitted");
             }
             catch (Exception ex)
             {

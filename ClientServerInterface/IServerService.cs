@@ -4,6 +4,7 @@ using System.Linq;
 using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
+using APIModels;
 
 namespace ClientServerInterface
 {
@@ -11,6 +12,10 @@ namespace ClientServerInterface
     public interface IServerService
     {
         [OperationContract]
-        string PostJob(string jobCode);
+        Task<string> PostJob(string jobCode);
+        [OperationContract]
+        Task<List<JobModel>> GetJobs();
+        [OperationContract]
+        Task AddJobToQueue(JobModel job);
     }
 }

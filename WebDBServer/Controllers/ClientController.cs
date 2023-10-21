@@ -83,5 +83,19 @@ namespace WebDBServer.Controllers
 
             return Json(new { Message = "Job result posted successfully" });
         }
+
+        [HttpGet]
+        public ActionResult GetJobResults()
+        {
+            // Retrieve and return the list of job results
+            List<JobResultModel> jobResults = JobResultListModel.JobResults;
+
+            if (jobResults.Count == 0)
+            {
+                return NotFound("No job results available.");
+            }
+
+            return Json(jobResults);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ClientServerInterface;
+﻿using APIModels;
+using ClientServerInterface;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
 using System;
@@ -13,11 +14,19 @@ namespace ClientDesktop
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     public class ClientService : IServerService
     {
-        public string PostJob(string jobCode)
+        public async Task AddJobToQueue(JobModel job)
         {
-            string executionResult = ServiceSingleton.PostJob(jobCode);
+            await ServiceSingleton.AddJobToQueue(job);
+        }
 
-            return executionResult;
+        public async Task<List<JobModel>> GetJobs()
+        {
+            return await ServiceSingleton.GetJobs();
+        }
+
+        public async Task<string> PostJob(string jobCode)
+        {
+            return await ServiceSingleton.PostJob(jobCode);
         }
     }
 }
