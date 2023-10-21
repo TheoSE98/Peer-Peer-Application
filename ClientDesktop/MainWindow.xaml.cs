@@ -250,6 +250,23 @@ namespace ClientDesktop
             }
         }
 
+        public async Task PostJobResult(JobResultModel jobResult)
+        {
+            RestRequest request = new RestRequest("/Client/PostJobResult", Method.Post);
+            request.AddJsonBody(jobResult);
+
+            RestResponse response = await client.ExecuteAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Console.WriteLine("Job result posted successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Error posting job result: " + response.Content);
+            }
+        }
+
         private void OpenFileButton_Click(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new Microsoft.Win32.OpenFileDialog

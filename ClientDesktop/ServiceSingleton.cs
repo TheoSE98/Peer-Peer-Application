@@ -49,7 +49,6 @@ namespace ClientDesktop
         {
             List<JobModel> jobs = new List<JobModel>();
 
-            // Use TryTake to dequeue items without blocking
             JobModel job;
             while (jobQueue.TryTake(out job))
             {
