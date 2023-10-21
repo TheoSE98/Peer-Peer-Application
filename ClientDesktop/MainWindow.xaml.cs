@@ -117,10 +117,9 @@ namespace ClientDesktop
                 // Create a channel to the client
                 IServerService serverChannel = factory.CreateChannel();
 
-                Console.WriteLine("test 1");
                 // Query if any jobs exist and download them
-                List<JobModel> jobs = await serverChannel.GetJobs(); // Change here to use async method
-                Console.WriteLine("test 2");
+                List<JobModel> jobs = serverChannel.GetJobs();
+                Console.WriteLine($"Number of jobs: {jobs.Count}");
 
                 if (jobs.Count > 0)
                 {
@@ -130,7 +129,7 @@ namespace ClientDesktop
                     var tasks = jobs.Select(async job =>
                     {
                         // Execute the job using IronPython
-                        string result = await serverChannel.PostJob(job.JobCode); // Change here to use async method
+                        string result = await serverChannel.PostJob(job.JobCode);
                         Console.WriteLine($"Job execution result: {result}");
                     });
 
@@ -223,7 +222,7 @@ namespace ClientDesktop
                         Console.WriteLine($"Adding a job to the queue: {pythonCode}");
                         JobModel job = new JobModel { JobCode = pythonCode};
                         service.AddJobToQueue(job);
-                        
+                        Console.WriteLine();
 
                         // Reset the flag
                         ProcessJobFlag = false;

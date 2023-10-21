@@ -14,14 +14,14 @@ namespace ClientDesktop
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     public class ClientService : IServerService
     {
-        public async Task AddJobToQueue(JobModel job)
+        public void AddJobToQueue(JobModel job)
         {
-            await ServiceSingleton.AddJobToQueue(job);
+            ServiceSingleton.AddJobToQueue(job);
         }
 
-        public async Task<List<JobModel>> GetJobs()
+        public List<JobModel> GetJobs()
         {
-            return await ServiceSingleton.GetJobs();
+            return ServiceSingleton.GetJobs();
         }
 
         public async Task<string> PostJob(string jobCode)

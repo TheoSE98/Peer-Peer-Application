@@ -14,8 +14,8 @@ namespace ClientServerInterface
         [OperationContract]
         Task<string> PostJob(string jobCode);
         [OperationContract]
-        Task<List<JobModel>> GetJobs();
+        List<JobModel> GetJobs();
         [OperationContract]
-        Task AddJobToQueue(JobModel job);
+        void AddJobToQueue(JobModel job);
     }
 }

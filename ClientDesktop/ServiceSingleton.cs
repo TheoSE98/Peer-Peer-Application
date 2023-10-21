@@ -13,6 +13,7 @@ namespace ClientDesktop
     public static class ServiceSingleton
     {
         private static BlockingCollection<JobModel> jobQueue = new BlockingCollection<JobModel>();
+
         public static async Task<string> PostJob(string jobCode)
         {
             try
@@ -23,7 +24,7 @@ namespace ClientDesktop
                 ScriptEngine engine = Python.GetEngine(runtime);
                 ScriptScope scope = engine.CreateScope();
 
-                await Task.Run(() => engine.Execute(jobCode, scope));
+                await engine.Execute(jobCode, scope);
 
                 // Retrieve the result
                 dynamic result = scope.GetVariable("result");
@@ -37,20 +38,22 @@ namespace ClientDesktop
             }
         }
 
-        public static async Task AddJobToQueue(JobModel job)
+        public static void AddJobToQueue(JobModel job)
         {
-            await Task.Run(() => jobQueue.Add(job));
-            Console.WriteLine("job adding to queue");
+            jobQueue.Add(job);
+            Console.WriteLine("Job added to queue");
+            Console.WriteLine($"total jobs in job queue: {jobQueue.Count}");
         }
 
-        public static async Task<List<JobModel>> GetJobs()
+        public static List<JobModel> GetJobs()
         {
             List<JobModel> jobs = new List<JobModel>();
 
-            // Use Take to dequeue items
-            foreach (var job in jobQueue.GetConsumingEnumerable())
+            // Use TryTake to dequeue items without blocking
+            JobModel job;
+            while (jobQueue.TryTake(out job))
             {
-                await Task.Run(() => jobs.Add(job));
+                jobs.Add(job);
             }
 
             return jobs;
