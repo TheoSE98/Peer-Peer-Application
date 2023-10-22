@@ -38,39 +38,6 @@ namespace WebDBServer.Controllers
             return Json(clients);
         }
 
-        [HttpGet]
-        public ActionResult GetOtherClients()
-        {
-            int currentPort = GetCurrentClientPort();
-
-            if (currentPort == -1)
-            {
-                return NotFound("No clients are registered.");
-            }
-
-            List<ClientModel> otherClients = ClientListModel.Clients
-                .Where((ClientModel client) => client.Port != currentPort)
-                .ToList();
-
-            if (otherClients.Count == 0)
-            {
-                return NotFound("No other clients found.");
-            }
-
-            return Json(otherClients);
-        }
-
-        private int GetCurrentClientPort()
-        {
-            ClientModel lastClient = ClientListModel.Clients.LastOrDefault();
-            if (lastClient == null)
-            {
-                return -1;
-            }
-
-            return lastClient.Port;
-        }
-
         [HttpPost]
         public ActionResult PostJobResult([FromBody] JobResultModel jobResult)
         {

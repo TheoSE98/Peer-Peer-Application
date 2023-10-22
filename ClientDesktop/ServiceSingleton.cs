@@ -63,7 +63,6 @@ namespace ClientDesktop
             }
             catch (Exception ex)
             {
-                // Handle any errors that occurred during job execution
                 return "Error: " + ex.Message;
             }
         }

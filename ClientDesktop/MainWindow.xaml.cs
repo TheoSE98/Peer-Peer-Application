@@ -186,7 +186,7 @@ namespace ClientDesktop
             }
         }
 
-        private void NetworkingThreadFunction()
+        private async void NetworkingThreadFunction()
         {
             while (true)
             {
@@ -202,7 +202,11 @@ namespace ClientDesktop
                         availableClients = await GetAvailableClients();
                     }).Wait();
 
-                    if (availableClients.Count > 0)
+                    if (availableClients.Count == 1 && availableClients[0].Port == currentServerPort)
+                    {
+                        await ConnectAndExecuteTasks(availableClients[0], new List<ClientModel>());
+                    }
+                    else if (availableClients.Count > 0)
                     {
                         List<ClientModel> updatedClients = new List<ClientModel>();
 
