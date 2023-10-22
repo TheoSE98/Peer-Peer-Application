@@ -10,5 +10,9 @@
         <TextBox Name="PythonCodeTextBox" HorizontalAlignment="Center" VerticalAlignment="Top" Width="400" Height="200" Margin="0,58,0,0" AcceptsReturn="True" />
         <Button Content="Submit Code" HorizontalAlignment="Left" VerticalAlignment="Top" Width="76" Height="30" Margin="279,282,0,0" Click="SubmitCodeButton_Click" />
         <Button Content="Open File" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="30" Margin="437,282,0,0" Click="OpenFileButton_Click" />
+        <Label Content="Job Status:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,290,0,0"/>
+        <Label x:Name="JobStatusLabel" Content="" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="140,290,0,0"/>
+        <Label Content="Completed Jobs:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,320,0,0"/>
+        <Label x:Name="CompletedJobsLabel" Content="" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="160,320,0,0"/>
     </Grid>
 </Window>

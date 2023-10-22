@@ -10,11 +10,30 @@ using APIModels;
 
 namespace ClientDesktop
 {
-    public static class ServiceSingleton
+    public class ServiceSingleton
     {
-        private static BlockingCollection<JobModel> jobQueue = new BlockingCollection<JobModel>();
+        private static ServiceSingleton instance;
+        private static List<JobModel> jobQueue = new List<JobModel>();
+        private static readonly object LockObject = new object();
 
-        public static string PostJob(string jobCode)
+
+        private ServiceSingleton()
+        {
+        }
+
+        // Property to access the singleton instance
+        public static ServiceSingleton Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new ServiceSingleton();
+                }
+                return instance;
+            }
+        }
+        public string PostJob(string jobCode)
         {
             try
             {
@@ -49,21 +68,21 @@ namespace ClientDesktop
             }
         }
 
-        public static void AddJobToQueue(JobModel job)
+        public void AddJobToQueue(JobModel job)
         {
             jobQueue.Add(job);
             Console.WriteLine("Job added to queue");
             Console.WriteLine($"total jobs in job queue: {jobQueue.Count}");
         }
 
-        public static List<JobModel> GetJobs()
+        public List<JobModel> GetJobs()
         {
-            List<JobModel> jobs = new List<JobModel>();
+            List<JobModel> jobs;
 
-            JobModel job;
-            while (jobQueue.TryTake(out job))
+            lock (LockObject) // Add locking to ensure thread safety
             {
-                jobs.Add(job);
+                jobs = new List<JobModel>(jobQueue);
+                jobQueue.Clear();
             }
 
             return jobs;

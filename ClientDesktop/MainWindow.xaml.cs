@@ -33,6 +33,10 @@ namespace ClientDesktop
         private RestClient client;
         private const string URL = "http://localhost:5002";
         private static bool ProcessJobFlag { get; set; }
+        private int completedJobCount = 0;
+        private int serverPort;
+        private bool IsWorkingOnJob { get; set; } = false;
+
 
         public MainWindow()
         {
@@ -45,6 +49,8 @@ namespace ClientDesktop
 
             serverThread = new Thread(ServerThreadFunction);
             serverThread.Start();
+
+            Task.Run(UpdateJobStatus);
         }
 
         private int GenerateRandomPort()
@@ -53,6 +59,19 @@ namespace ClientDesktop
             int minPort = 49152; // The minimum valid port number
             int maxPort = 65535; // The maximum valid port number
             return random.Next(minPort, maxPort + 1);
+        }
+
+        private async Task UpdateJobStatus()
+        {
+            while (true)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    JobStatusLabel.Content = IsWorkingOnJob ? "Working on a job" : "Idle";
+                });
+
+                await Task.Delay(1000);
+            }
         }
 
         private void RegisterClient(int port)
@@ -86,7 +105,7 @@ namespace ClientDesktop
             {
                 Console.WriteLine("Requesting available clients from the server...");
 
-                RestRequest request = new RestRequest("/Client/GetOtherClients", Method.Get);
+                RestRequest request = new RestRequest("/Client/ClientList", Method.Get);
                 RestResponse response = await client.ExecuteAsync(request);
 
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -128,6 +147,7 @@ namespace ClientDesktop
                     // Process the jobs
                     foreach (var job in jobs)
                     {
+                        IsWorkingOnJob = true;
                         // Execute the job using IronPython
                         string result = serverChannel.PostJob(job.JobCode);
                         Console.WriteLine($"Job execution result: {result}");
@@ -142,17 +162,27 @@ namespace ClientDesktop
 
                         // Send the job result to the server
                         await PostJobResult(jobResult);
+
+                        completedJobCount++;
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            CompletedJobsLabel.Content = completedJobCount.ToString();
+                        });
+
+                        IsWorkingOnJob = false;
                     }
 
                     // Add the client to the updatedClients list after processing its jobs
                     updatedClients.Add(client);
                 }
-
+         
                 factory.Close();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to client {client.IP}:{client.Port}: {ex.Message}");
+                IsWorkingOnJob = false;                
             }
         }
 
@@ -164,6 +194,8 @@ namespace ClientDesktop
                 {
                     List<ClientModel> availableClients = null;
 
+                    int currentServerPort = serverPort;
+
                     // Get available clients
                     Task.Run(async () =>
                     {
@@ -173,6 +205,8 @@ namespace ClientDesktop
                     if (availableClients.Count > 0)
                     {
                         List<ClientModel> updatedClients = new List<ClientModel>();
+
+                        availableClients = availableClients.Where(client => client.Port != currentServerPort).ToList();
 
                         foreach (var client in availableClients)
                         {
@@ -185,10 +219,8 @@ namespace ClientDesktop
                             }).Wait();
                         }
 
-                        availableClients = updatedClients;
                     }
 
-                    // Wait for some time before checking again
                     Thread.Sleep(5000);
                 }
                 catch (Exception ex)
@@ -200,11 +232,11 @@ namespace ClientDesktop
 
         private void ServerThreadFunction()
         {
-            int port = GenerateRandomPort();
+            serverPort = GenerateRandomPort();
 
-            Console.WriteLine($"Server has started on port {port}");
+            Console.WriteLine($"Server has started on port {serverPort}");
 
-            RegisterClient(port);
+            RegisterClient(serverPort);
 
             ServiceHost host = null;
 
@@ -216,7 +248,7 @@ namespace ClientDesktop
 
                 host = new ServiceHost(typeof(ClientService));
 
-                string serviceAddress = $"net.tcp://localhost:{port}/ClientService";
+                string serviceAddress = $"net.tcp://localhost:{serverPort}/ClientService";
 
                 host.AddServiceEndpoint(typeof(IServerService), tcp, serviceAddress);
                 host.Open();

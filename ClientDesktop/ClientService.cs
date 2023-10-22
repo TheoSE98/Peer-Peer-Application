@@ -14,19 +14,21 @@ namespace ClientDesktop
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     public class ClientService : IServerService
     {
+        private ServiceSingleton serviceSingleton = ServiceSingleton.Instance;
+
         public void AddJobToQueue(JobModel job)
         {
-            ServiceSingleton.AddJobToQueue(job);
+            serviceSingleton.AddJobToQueue(job);
         }
 
         public List<JobModel> GetJobs()
         {
-            return ServiceSingleton.GetJobs();
+            return serviceSingleton.GetJobs();
         }
 
         public string PostJob(string jobCode)
         {
-            return ServiceSingleton.PostJob(jobCode);
+            return serviceSingleton.PostJob(jobCode);
         }
     }
 }
