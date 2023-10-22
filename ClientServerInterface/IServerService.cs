@@ -12,7 +12,7 @@ namespace ClientServerInterface
     public interface IServerService
     {
         [OperationContract]
-        Task<string> PostJob(string jobCode);
+        string PostJob(string jobCode);
         [OperationContract]
         List<JobModel> GetJobs();
         [OperationContract]

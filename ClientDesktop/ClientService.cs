@@ -24,9 +24,9 @@ namespace ClientDesktop
             return ServiceSingleton.GetJobs();
         }
 
-        public async Task<string> PostJob(string jobCode)
+        public string PostJob(string jobCode)
         {
-            return await ServiceSingleton.PostJob(jobCode);
+            return ServiceSingleton.PostJob(jobCode);
         }
     }
 }

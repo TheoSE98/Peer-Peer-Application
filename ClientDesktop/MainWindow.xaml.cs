@@ -126,19 +126,28 @@ namespace ClientDesktop
                     Console.WriteLine($"Connected to client {client.IP}:{client.Port}");
                     Console.WriteLine($"Found {jobs.Count} job(s) to execute:");
                     // Process the jobs
-                    var tasks = jobs.Select(async job =>
+                    foreach (var job in jobs)
                     {
                         // Execute the job using IronPython
-                        string result = await serverChannel.PostJob(job.JobCode);
+                        string result = serverChannel.PostJob(job.JobCode);
                         Console.WriteLine($"Job execution result: {result}");
-                    });
 
-                    await Task.WhenAll(tasks);
+                        // Create a JobResultModel and set its properties
+                        JobResultModel jobResult = new JobResultModel
+                        {
+                            ClientPort = client.Port,
+                            ExecutionResult = result.ToString(),
+                        };
 
+
+                        // Send the job result to the server
+                        await PostJobResult(jobResult);
+                    }
+
+                    // Add the client to the updatedClients list after processing its jobs
                     updatedClients.Add(client);
                 }
 
-                // Close the factory after use
                 factory.Close();
             }
             catch (Exception ex)
@@ -252,18 +261,29 @@ namespace ClientDesktop
 
         public async Task PostJobResult(JobResultModel jobResult)
         {
-            RestRequest request = new RestRequest("/Client/PostJobResult", Method.Post);
-            request.AddJsonBody(jobResult);
-
-            RestResponse response = await client.ExecuteAsync(request);
-
-            if (response.StatusCode == HttpStatusCode.OK)
+            try
             {
-                Console.WriteLine("Job result posted successfully.");
+                Console.WriteLine("Posting job result: ");
+                Console.WriteLine($"ClientPort: {jobResult.ClientPort}");
+                Console.WriteLine($"ExecutionResult: {jobResult.ExecutionResult}");
+
+                RestRequest request = new RestRequest("/Client/PostJobResult", Method.Post);
+                request.AddJsonBody(jobResult);
+
+                RestResponse response = await client.ExecuteAsync(request);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine("Job result posted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Error posting job result: " + response.Content);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Error posting job result: " + response.Content);
+                Console.WriteLine("Error posting job result: " + ex.Message);
             }
         }
 

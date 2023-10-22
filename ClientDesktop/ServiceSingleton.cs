@@ -14,7 +14,7 @@ namespace ClientDesktop
     {
         private static BlockingCollection<JobModel> jobQueue = new BlockingCollection<JobModel>();
 
-        public static async Task<string> PostJob(string jobCode)
+        public static string PostJob(string jobCode)
         {
             try
             {
@@ -24,12 +24,23 @@ namespace ClientDesktop
                 ScriptEngine engine = Python.GetEngine(runtime);
                 ScriptScope scope = engine.CreateScope();
 
-                await engine.Execute(jobCode, scope);
+                engine.Execute(jobCode, scope);
 
                 // Retrieve the result
                 dynamic result = scope.GetVariable("result");
 
-                return result.ToString();
+                if (result != null)
+                {
+                    return "Job Completed successfully";
+                }
+                else
+                {
+                    foreach (var variable in scope.GetVariableNames())
+                    {
+                        Console.WriteLine($"LOOK HERE: {variable} = {scope.GetVariable(variable)}");
+                    }
+                    return "Job encountered an error";
+                }
             }
             catch (Exception ex)
             {
