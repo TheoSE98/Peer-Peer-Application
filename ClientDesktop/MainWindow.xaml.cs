@@ -23,9 +23,6 @@ using System.Net;
 
 namespace ClientDesktop
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private Thread networkingThread;
@@ -111,7 +108,7 @@ namespace ClientDesktop
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     Console.WriteLine("Available clients retrieved successfully.");
-                    // Deserialize the response to get available clients
+
                     var availableClients = JsonConvert.DeserializeObject<List<ClientModel>>(response.Content);
                     Console.WriteLine($"Available clients count: {availableClients.Count}");
                     return availableClients;
@@ -148,19 +145,16 @@ namespace ClientDesktop
                     foreach (var job in jobs)
                     {
                         IsWorkingOnJob = true;
-                        // Execute the job using IronPython
+
                         string result = serverChannel.PostJob(job.JobCode);
                         Console.WriteLine($"Job execution result: {result}");
 
-                        // Create a JobResultModel and set its properties
                         JobResultModel jobResult = new JobResultModel
                         {
                             ClientPort = client.Port,
                             ExecutionResult = result.ToString(),
                         };
 
-
-                        // Send the job result to the server
                         await PostJobResult(jobResult);
 
                         completedJobCount++;
@@ -275,20 +269,17 @@ namespace ClientDesktop
                 }
             }
             catch (Exception e)
-            {
-                // Handle any errors when attempting to start the server 
+            {               
                 Console.WriteLine("An error has occured when attempting to start server: " + e.Message);
             }
             finally
             {
-                // Check host is open before closing 
                 if (host != null && host.State == CommunicationState.Opened)
                 {
                     try
                     {
                         host.Close();
                     }
-                    // Handles Errors when server is closed
                     catch (Exception ex) { Console.WriteLine("An error occured when attempting to close server " + ex.Message); }
                 }
             }
