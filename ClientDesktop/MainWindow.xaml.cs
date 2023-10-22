@@ -224,11 +224,10 @@ namespace ClientDesktop
                 while (true)
                 {
                     if (ProcessJobFlag)
-                    {
-                        // This probably needs to be sent to the WebServer instead of this shit 
+                    { 
                         string pythonCode = JobData.PythonCode;
-                        //string result = service.PostJob(pythonCode);
                         Console.WriteLine($"Adding a job to the queue: {pythonCode}");
+
                         JobModel job = new JobModel { JobCode = pythonCode};
                         service.AddJobToQueue(job);
                         Console.WriteLine();
@@ -319,7 +318,6 @@ namespace ClientDesktop
                     return; 
                 }
 
-                // Create a channel factory to communicate with the server's WCF service
                 JobData.PythonCode = pythonCode;
 
                 ProcessJobFlag = true;
