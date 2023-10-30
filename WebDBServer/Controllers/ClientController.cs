@@ -7,23 +7,20 @@ namespace WebDBServer.Controllers
 {
     public class ClientController : Controller
     {
-        //private readonly Random random = new Random();
-        //private const int MinPort = 1024; // Minimum valid port number
-        //private const int MaxPort = 65535; // Maximum valid port number
-
-        public ClientController()
-        {
-            // Testing Data 
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 1234 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 5678 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 4321 });
-            ClientListModel.Clients.Add(new ClientModel { IP = "localhost", Port = 8765 });
-
-        }
-
         [HttpPost]
         public ActionResult Register([FromBody] ClientModel newClient)
         {
+            if (newClient == null)
+            {
+                return BadRequest("Invalid client data.");
+            }
+
+            // Check if the client is already registered based on their port
+            if (ClientListModel.Clients.Any(c => c.Port == newClient.Port))
+            {
+                return Conflict("Client with the same port is already registered.");
+            }
+
             // Add the client to the static list
             ClientListModel.Clients.Add(newClient);
 
@@ -32,32 +29,40 @@ namespace WebDBServer.Controllers
 
         public ActionResult ClientList()
         {
-            return Json(ClientListModel.Clients);
+            List<ClientModel> clients = ClientListModel.Clients;
+            if (clients.Count == 0)
+            {
+                return NotFound("No clients are registered.");
+            }
+
+            return Json(clients);
+        }
+
+        [HttpPost]
+        public ActionResult PostJobResult([FromBody] JobResultModel jobResult)
+        {
+            if (jobResult == null)
+            {
+                return BadRequest("Invalid job result data");
+            }
+
+            JobResultListModel.JobResults.Add(jobResult);
+
+            return Json(new { Message = "Job result posted successfully" });
         }
 
         [HttpGet]
-        public ActionResult GetOtherClients()
+        public ActionResult GetJobResults()
         {
-            int currentPort = GetCurrentClientPort();
+            // Retrieve and return the list of job results
+            List<JobResultModel> jobResults = JobResultListModel.JobResults;
 
-            List<ClientModel> otherClients = new List<ClientModel>();
-
-            foreach (ClientModel client in ClientListModel.Clients)
+            if (jobResults.Count == 0)
             {
-                if (client.Port != currentPort)
-                {
-                    otherClients.Add(client);
-                }
+                return NotFound("No job results available.");
             }
 
-            return Json(otherClients);
-        }
-
-        private int GetCurrentClientPort()
-        {
-            int currentPort = ClientListModel.Clients.Last().Port;
-
-            return currentPort;
+            return Json(jobResults);
         }
     }
 }
